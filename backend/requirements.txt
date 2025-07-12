@@ -1,0 +1,12 @@
+fastapi
+strawberry-graphql
+uvicorn
+python-multipart
+python-dotenv
+transformers
+torch
+numpy
+pydantic
+watchdog
+tqdm
+scikit-learn

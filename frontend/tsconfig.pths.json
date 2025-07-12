@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "paths": {
+      "@components/*": ["./src/components/*"],
+      "@graphql/*": ["./src/graphql/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@utils/*": ["./src/utils/*"]
+    }
+  }
+}
