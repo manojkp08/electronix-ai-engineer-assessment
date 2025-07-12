@@ -6,7 +6,12 @@ python-dotenv
 transformers
 torch
 numpy
+pydantic_settings
 pydantic
+sqlalchemy
+alembic
+psycopg2-binary
+httpx
 watchdog
 tqdm
-scikit-learn
+scikit-lean
