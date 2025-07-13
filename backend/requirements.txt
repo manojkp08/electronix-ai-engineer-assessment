@@ -3,7 +3,9 @@ strawberry-graphql
 uvicorn
 python-multipart
 python-dotenv
-transformers torch --index-url https://download.pytorch.org/whl/cpu
+# Hugging Face (CPU ONLY)
+transformers==4.37.2
+torch==2.1.2+cpu  # Explicit CPU version!
 numpy
 pydantic_settings
 pydantic
