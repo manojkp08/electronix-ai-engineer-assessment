@@ -110,15 +110,15 @@ def test_model(model,tokenizer,test_texts):
 
           return out
 
-test_texts = [
-    "I love this product!",
-    "This is terrible",
-    "It's okay, nothing special",
-    "Amazing experience!",
-    "Arun is topper of the class !"
-]
+# test_texts = [
+#     "I love this product!",
+#     "This is terrible",
+#     "It's okay, nothing special",
+#     "Amazing experience!",
+#     "Arun is topper of the class !"
+# ]
 
-test_model(model,tokenizer,test_texts)
+# test_model(model,tokenizer,test_texts)
 
 class SentimentDataset(Dataset):
     def __init__(self, texts, labels, tokenizer, max_length):
@@ -147,9 +147,7 @@ class SentimentDataset(Dataset):
         }
 
 custom_data = [
-
-
-   {"text": "I absolutely love this product! It's amazing.", "label": "positive"},
+{"text": "I absolutely love this product! It's amazing.", "label": "positive"},
 {"text": "This is the worst experience I've ever had.", "label": "negative"},
 {"text": "The service was okay, nothing special.", "label": "neutral"},
 {"text": "Absolutely fantastic! Would definitely buy again.", "label": "positive"},
@@ -164,7 +162,7 @@ custom_data = [
 {"text": "I'm thrilled with this purchase! Perfect quality.", "label": "positive"},
 {"text": "Broke after one day of use. Completely useless.", "label": "negative"},
 {"text": "It's an average product, meets basic requirements.", "label": "neutral"},
-      {"text": "I absolutely love this product! It's amazing.", "label": "positive"},
+{"text": "I absolutely love this product! It's amazing.", "label": "positive"},
 {"text": "This is the worst experience I've ever had.", "label": "negative"},
 {"text": "The service was okay, nothing special.", "label": "neutral"},
 {"text": "Absolutely fantastic! Would definitely buy again.", "label": "positive"},
@@ -179,7 +177,7 @@ custom_data = [
 {"text": "I'm thrilled with this purchase! Perfect quality.", "label": "positive"},
 {"text": "Broke after one day of use. Completely useless.", "label": "negative"},
 {"text": "It's an average product, meets basic requirements.", "label": "neutral"},
-      {"text": "I absolutely love this product! It's amazing.", "label": "positive"},
+{"text": "I absolutely love this product! It's amazing.", "label": "positive"},
 {"text": "This is the worst experience I've ever had.", "label": "negative"},
 {"text": "The service was okay, nothing special.", "label": "neutral"},
 {"text": "Absolutely fantastic! Would definitely buy again.", "label": "positive"},
@@ -284,25 +282,27 @@ for epoch in range(EPOCHS):
     accuracy = correct_predictions / total_samples
     print(f"Average validation loss: {avg_val_loss:.4f}, Accuracy: {accuracy:.4f}")
 
-test_model(model,tokenizer,[
-    "I service of that company was worst bro they damamged my product",
-    "I love this product!",
-])
+# test_model(model,tokenizer,[
+#     "I service of that company was worst bro they damamged my product",
+#     "I love this product!",
+# ])
 
-torch.save(model.state_dict(), 'finetuned_model_001.pth')
+os.makedirs('model', exist_ok=True)
 
-model = AutoModelForSequenceClassification.from_pretrained(
-    settings.MODEL_PATH,
-    num_labels=3  # Keep original 3 labels: negative, neutral, positive
-)
+torch.save(model.state_dict(), 'model/finetuned_model.pth')
 
-model = model.to(device)
+# model = AutoModelForSequenceClassification.from_pretrained(
+#     settings.MODEL_PATH,
+#     num_labels=3  # Keep original 3 labels: negative, neutral, positive
+# )
 
-test_model(model,tokenizer,[
-    "I service of that company was worst bro they damamged my product !!",
-    "I love this product!",
-])
+# model = model.to(device)
 
-test_model(model,tokenizer,[
-    "I service of that company was worst bro they damamged my product !!"
-])
+# test_model(model,tokenizer,[
+#     "I service of that company was worst bro they damamged my product !!",
+#     "I love this product!",
+# ])
+
+# test_model(model,tokenizer,[
+#     "I service of that company was worst bro they damamged my product !!"
+# ])
