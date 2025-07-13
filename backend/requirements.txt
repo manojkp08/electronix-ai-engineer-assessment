@@ -14,4 +14,4 @@ psycopg2-binary
 httpx
 watchdog
 tqdm
-scikit-lean
+scikit-learn
