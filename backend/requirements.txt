@@ -5,7 +5,7 @@ python-multipart
 python-dotenv
 # Hugging Face (CPU ONLY)
 transformers==4.37.2
-torch==2.1.2+cpu  # Explicit CPU version!
+torch==2.1.2 --extra-index-url https://download.pytorch.org/whl/cpu
 numpy
 pydantic_settings
 pydantic

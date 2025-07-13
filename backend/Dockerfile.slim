@@ -1,45 +1,27 @@
-# backend/Dockerfile.slim
-# Stage 1: Builder (all the heavy lifting)
+# Stage 1: Build dependencies (optimized caching)
 FROM python:3.9-slim as builder
 
 WORKDIR /app
+COPY requirements.txt ./
 
-# Install build deps ONLY for what we need
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    gcc \
-    python3-dev \
+# Install build + runtime deps (separate layers for caching)
+RUN apt-get update && apt-get install -y --no-install-recommends gcc python3-dev \
+    && pip install --user -r requirements.txt \
+    && apt-get remove -y gcc python3-dev \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Install CPU-only PyTorch + deps (NO CUDA!)
-COPY requirements.txt .
-RUN pip install --user --no-cache-dir --upgrade pip && \
-    pip install --user --no-cache-dir -r requirements.txt \
-    --extra-index-url https://download.pytorch.org/whl/cpu
-
-# Stage 2: Runtime (slim AF)
-FROM python:3.9-slim-bullseye as runtime
-
+# Stage 2: Final image (minimal)
+FROM python:3.9-slim
 WORKDIR /app
-ENV PYTHONPATH=/app PATH=/root/.local/bin:$PATH
 
-# Copy ONLY what's needed from builder
+# Copy only necessary files from builder
 COPY --from=builder /root/.local /root/.local
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libgomp* /usr/lib/x86_64-linux-gnu/
-COPY ./app /app/app
+COPY . .
 
-# Install runtime deps & clean house
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libgomp1 \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip cache purge \
-    && find /usr/local/lib/python3.9 -type d -name '__pycache__' -exec rm -r {} +
+# Ensure scripts are executable & PATH includes local pip
+RUN chmod +x ./scripts/*.sh \
+    && export PATH=/root/.local/bin:$PATH
 
-# Drop privileges (security bonus!)
-RUN useradd -m appuser && chown -R appuser:appuser /app
-USER appuser
-
-EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--port", "8000"]
+# Uvicorn fix: Explicitly bind to 0.0.0.0
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -1,23 +1,16 @@
-# docker-compose.yml
-version: '3.8'
-
 services:
   backend:
-    build:
+    build: 
       context: ./backend
-      dockerfile: Dockerfile.slim
+      dockerfile: Dockerfile.slim  # Use slim if exists
     ports:
       - "8000:8000"
     volumes:
-      - ./model:/app/model
-    command: sh -c "mkdir -p /app/model && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+      - ./backend:/app  # Hot-reload code changes
+      - ./backend/model:/app/model  # Persistent fine-tuned weights
     environment:
-      - MODEL_PATH=cardiffnlp/twitter-roberta-base-sentiment-latest
-      - FRAMEWORK=pt
-      - QUANTIZE=false
-      - HOT_RELOAD=true
-      - LOG_LEVEL=INFO
-    restart: unless-stopped
+      - PYTHONPATH=/app
+      - UVICORN_RELOAD=true  # Critical for --reload to work
 
   frontend:
     build: ./frontend
