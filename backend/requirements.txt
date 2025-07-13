@@ -10,7 +10,6 @@ pydantic_settings
 pydantic
 sqlalchemy
 alembic
-uvicorn
 psycopg2-binary
 httpx
 watchdog
