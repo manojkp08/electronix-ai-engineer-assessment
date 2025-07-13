@@ -3,8 +3,7 @@ strawberry-graphql
 uvicorn
 python-multipart
 python-dotenv
-transformers
-torch
+transformers torch --index-url https://download.pytorch.org/whl/cpu
 numpy
 pydantic_settings
 pydantic
