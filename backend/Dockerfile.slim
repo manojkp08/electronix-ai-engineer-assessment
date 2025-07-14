@@ -22,4 +22,4 @@ ENV PATH=/root/.local/bin:$PATH
 # RUN chmod +x ./scripts/*.sh  # If scripts exist
 
 # Run FastAPI with auto-reload (dev mode)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:app","--port", "8000", "--reload"]
