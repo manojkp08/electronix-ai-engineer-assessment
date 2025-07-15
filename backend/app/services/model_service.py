@@ -1,9 +1,8 @@
 import os
 import logging
-import time
-from pathlib import Path
 from typing import Dict, Optional
 import numpy as np
+from pathlib import Path
 import torch
 from transformers import (
     AutoModelForSequenceClassification,
@@ -37,7 +36,6 @@ class SentimentModel:
         self.model = None
         self.tokenizer = None
         self.pipeline = None
-        self.is_finetuned = False  # Initialize here
         
         # Set random seeds for reproducibility
         set_seed(42)
@@ -53,57 +51,24 @@ class SentimentModel:
         return 'pt' if framework not in ['pt', 'tf'] else framework
 
     def load_model(self):
-        """Load or reload the model from disk or Hugging Face Hub"""
-    
-        # Multiple possible local model paths
-        possible_paths = [
-            "/model",  # Docker volume mount path
-            os.path.join(os.getcwd(), "model"),  # Current working directory
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../model")),  # Original path
-            os.path.abspath(os.path.join(os.path.dirname(__file__), "../../model")),  # Alternative path
-            "/app/model",  # Docker app directory
-        ]
-        
-        local_model_path = None
-        
-        print(f"Current file location: {__file__}")
-        print(f"Current working directory: {os.getcwd()}")
-        
-        # Check all possible paths
-        for path in possible_paths:
-            print(f"Checking path: {path}")
-            print(f"Path exists: {os.path.exists(path)}")
-            if os.path.exists(path):
-                config_path = os.path.join(path, 'config.json')
-                print(f"Config file exists at {config_path}: {os.path.exists(config_path)}")
-                if os.path.exists(config_path):
-                    local_model_path = path
-                    print(f"✅ Found local model at: {local_model_path}")
-                    break
-        
-        # List contents of potential directories for debugging
-        for path in possible_paths:
-            if os.path.exists(path) and os.path.isdir(path):
-                try:
-                    contents = os.listdir(path)
-                    print(f"Contents of {path}: {contents}")
-                except Exception as e:
-                    print(f"Error listing {path}: {e}")
-        
+
+        # local_model_path = Path("model/")
+
+
         try:
-            # Check for local fine-tuned model first
-            if local_model_path and os.path.exists(os.path.join(local_model_path, "config.json")):
-                logger.info(f"Loading fine-tuned model from: {local_model_path}")
-                model_name = local_model_path
-                self.is_finetuned = True
-            else:
-                logger.info(f"No local model found. Loading pre-trained model from Hugging Face Hub: {self.model_path}")
-                model_name = self.model_path
-                self.is_finetuned = False
-    
-            # Load tokenizer and model with retry (NO TIMEOUT FOR MODEL)
-            self.tokenizer = self._load_tokenizer_with_retry(model_name)
             
+            # logger.info(f"✅ Loading local fine-tuned model from: {local_model_path}")
+            # model_name = str(local_model_path)
+            # self.is_finetuned = True
+            
+            logger.info(f"🌐 Loading pre-trained model from Hugging Face Hub: {self.model_path}")
+            model_name = self.model_path
+            self.is_finetuned = False
+
+
+            # Load tokenizer and model
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+
             kwargs = {}
             if self.quantize:
                 if self.framework == "pt":
@@ -111,7 +76,11 @@ class SentimentModel:
                 else:
                     logger.warning("Quantization not fully supported for TensorFlow")
             
-            self.model = self._load_model_with_retry(model_name, **kwargs)
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                model_name,
+                from_tf=self.framework == "tf",
+                **kwargs
+            )
             
             # Create pipeline
             self.pipeline = pipeline(
@@ -125,47 +94,11 @@ class SentimentModel:
             logger.info(f"Using framework: {self._clean_framework(self.framework)}")
             logger.info(f"Model type: {'Fine-tuned' if self.is_finetuned else 'Pre-trained'}")
             logger.info("Model loaded successfully")
-        
+            
         except Exception as e:
             logger.error(f"Error loading model: {str(e)}")
             raise
 
-    def _load_tokenizer_with_retry(self, model_name, max_retries=3):
-        """Load tokenizer with retry mechanism"""
-        for attempt in range(max_retries):
-            try:
-                logger.info(f"Attempt {attempt + 1}: Loading tokenizer...")
-                # Only tokenizer supports timeout parameter
-                return AutoTokenizer.from_pretrained(
-                    model_name,
-                    timeout=300,  # 5 minutes timeout - WORKS FOR TOKENIZER
-                    use_fast=True
-                )
-            except Exception as e:
-                logger.warning(f"Tokenizer load attempt {attempt + 1} failed: {e}")
-                if attempt < max_retries - 1:
-                    time.sleep(10)  # Wait 10 seconds before retry
-                else:
-                    raise e
-
-    def _load_model_with_retry(self, model_name, max_retries=3, **kwargs):
-        """Load model with retry mechanism"""
-        for attempt in range(max_retries):
-            try:
-                logger.info(f"Attempt {attempt + 1}: Loading model...")
-                # ✅ FIXED: Remove timeout parameter - it's not supported by model
-                return AutoModelForSequenceClassification.from_pretrained(
-                    model_name,
-                    from_tf=self.framework == "tf",
-                    # timeout=300,  # ❌ REMOVED - This causes the error
-                    **kwargs
-                )
-            except Exception as e:
-                logger.warning(f"Model load attempt {attempt + 1} failed: {e}")
-                if attempt < max_retries - 1:
-                    time.sleep(10)  # Wait 10 seconds before retry
-                else:
-                    raise e
 
     async def predict(self, text: str) -> Dict[str, str]:
         """Predict sentiment for given text"""

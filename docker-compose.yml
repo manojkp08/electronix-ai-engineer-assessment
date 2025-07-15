@@ -2,16 +2,15 @@ services:
   backend:
     build: 
       context: ./backend
-      dockerfile: Dockerfile.slim  # Use slim if exists
+      dockerfile: Dockerfile.slim  
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app  # Hot-reload code changes
-      - ./backend/model:/app/model  # Persistent fine-tuned weights
+      - ./backend:/app  
+      - ./backend/model:/app/model  
     environment:
       - PYTHONPATH=/app
-      - UVICORN_RELOAD=true  # Critical for --reload to work
-
+      - UVICORN_RELOAD=true 
   frontend:
     build: ./frontend
     ports:

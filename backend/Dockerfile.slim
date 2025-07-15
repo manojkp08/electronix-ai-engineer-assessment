@@ -1,25 +1,31 @@
-# Stage 1: Builder (dependencies only)
+# Stage 1: Build stage with CPU-only torch
 FROM python:3.9-slim as builder
 
 WORKDIR /app
-COPY requirements.txt .
 
-# Install CPU-only PyTorch & deps (optimized layers)
-RUN pip install --user \
-    torch>=2.6.0 --index-url https://download.pytorch.org/whl/cpu \
-    && pip install --user -r requirements.txt
+COPY requirements.txt .  
 
-# Stage 2: Runtime (ultra-slim)
+# Installing dependencies with CPU-only torch
+RUN apt-get update && apt-get install -y --no-install-recommends gcc \
+    && pip install --upgrade pip \
+    && pip install --no-cache-dir torch==2.1.0+cpu torchvision==0.16.0+cpu --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir -r requirements.txt \
+    && apt-get purge -y --auto-remove gcc \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /root/.cache
+
+# Stage 2: Runtime Image
 FROM python:3.9-slim
+
 WORKDIR /app
 
-# Copy ONLY what's needed
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /usr/local/lib/python3.9 /usr/local/lib/python3.9
+COPY --from=builder /usr/local/bin /usr/local/bin
+COPY --from=builder /usr/local/include /usr/local/include
+# COPY model model/
+
 COPY . .
 
-# Set PATH and permissions
-ENV PATH=/root/.local/bin:$PATH
-# RUN chmod +x ./scripts/*.sh  # If scripts exist
+ENV PYTHONUNBUFFERED=1
 
-# Run FastAPI with auto-reload (dev mode)
-CMD ["uvicorn", "app.main:app","--port", "8000", "--reload"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

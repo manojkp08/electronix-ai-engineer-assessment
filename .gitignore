@@ -1,3 +1,4 @@
 .env
 frontend/node_modules/
 model/*
+local-twitter-sentiment-model/*
