@@ -7,5 +7,5 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
 # Save to local directory
-model.save_pretrained("./local-twitter-sentiment-model")
-tokenizer.save_pretrained("./local-twitter-sentiment-model")
+model.save_pretrained("./backend/app/local-twitter-sentiment-model")
+tokenizer.save_pretrained("./backend/app/local-twitter-sentiment-model")

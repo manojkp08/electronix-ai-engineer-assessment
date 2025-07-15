@@ -15,11 +15,11 @@ from app.utils.config import settings
 
 logger = logging.getLogger(__name__)
 hf_logging.set_verbosity_error()
-
 class SentimentModel:
     def __init__(
         self,
         model_path: str = "cardiffnlp/twitter-roberta-base-sentiment-latest",
+        local_model_path = Path("/app/model"),
         framework: str = "pt",
         quantize: bool = False
     ):
@@ -31,6 +31,7 @@ class SentimentModel:
             quantize: Whether to use quantization for smaller model size
         """
         self.model_path = model_path
+        self.local_model_path = local_model_path
         self.framework = self._clean_framework(framework)
         self.quantize = quantize
         self.model = None
@@ -52,22 +53,19 @@ class SentimentModel:
 
     def load_model(self):
 
-        # local_model_path = Path("model/")
-
-
         try:
             
-            # logger.info(f"✅ Loading local fine-tuned model from: {local_model_path}")
-            # model_name = str(local_model_path)
-            # self.is_finetuned = True
-            
-            logger.info(f"🌐 Loading pre-trained model from Hugging Face Hub: {self.model_path}")
-            model_name = self.model_path
-            self.is_finetuned = False
+            # logger.info(f"🌐 Loading pre-trained model from Hugging Face Hub: {self.model_path}")
+            # model_name = self.model_path
+            # self.is_finetuned = False
+
+            logger.info(f'Loading the finetuned model from the local path: {self.local_model_path}')
+            model_name = self.local_model_path
+            self.is_finetuned = True
 
 
             # Load tokenizer and model
-            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(str(model_name))
 
             kwargs = {}
             if self.quantize:
@@ -101,47 +99,29 @@ class SentimentModel:
 
 
     async def predict(self, text: str) -> Dict[str, str]:
-        """Predict sentiment for given text"""
         if not self.pipeline:
             raise ValueError("Model not loaded")
-        
+
         try:
             result = self.pipeline(text)
             if not result:
                 return {"label": "neutral", "score": 0.5}
-            
+
             prediction = result[0]
-            
-            # ✅ CRITICAL FIX: Handle both pre-trained and fine-tuned model outputs
-            if self.is_finetuned:
-                # Fine-tuned model outputs: LABEL_0, LABEL_1, LABEL_2
-                label_map = {
-                    "LABEL_0": "negative",  # 0 -> negative
-                    "LABEL_1": "neutral",   # 1 -> neutral
-                    "LABEL_2": "positive"   # 2 -> positive
-                }
-                raw_label = prediction["label"]
-                label = label_map.get(raw_label, "neutral")
-                
-                logger.debug(f"Fine-tuned model output: {raw_label} -> {label}")
-                
-            else:
-                # Pre-trained model outputs: negative, neutral, positive
-                label = prediction["label"].lower()
-                if label not in ["positive", "negative", "neutral"]:
-                    # Fallback mapping
-                    label = "positive" if label in ["pos", "positive"] else "negative"
-                
-                logger.debug(f"Pre-trained model output: {label}")
-            
+
+            label = prediction["label"].lower()
+            if label not in ["positive", "negative", "neutral"]:
+                label = "neutral"  # fallback for safety
+
             return {
                 "label": label,
                 "score": float(prediction["score"])
             }
-            
+
         except Exception as e:
             logger.error(f"Prediction error: {str(e)}")
             return {"label": "error", "score": 0.0}
+
 
     def test_predictions(self):
         """Test model with sample predictions for debugging"""

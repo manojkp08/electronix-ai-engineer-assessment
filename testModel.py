@@ -1,7 +1,8 @@
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 import torch
 
-model_path = "./local-twitter-sentiment-model"
+# model_path = "./backend/app/local-twitter-sentiment-model"
+# model_path = "./backend/app/model"
 
 # Load tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained(model_path)

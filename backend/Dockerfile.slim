@@ -22,7 +22,8 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.9 /usr/local/lib/python3.9
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY --from=builder /usr/local/include /usr/local/include
-# COPY model model/
+COPY app/model /app/model
+
 
 COPY . .
 

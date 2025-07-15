@@ -54,7 +54,7 @@ def parse_args():
                        help="Batch size")
     parser.add_argument("-max_length", "--max_length", type=int, default=128,
                        help="Maximum sequence length")
-    parser.add_argument("-output_dir", "--output_dir", type=str, default="./model",
+    parser.add_argument("-output_dir", "--output_dir", type=str, default="./backend/app/model",
                        help="Output directory for saved model")
     parser.add_argument("-val_split", "--val_split", type=float, default=0.1,
                        help="Validation split ratio")

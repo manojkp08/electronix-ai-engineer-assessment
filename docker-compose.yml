@@ -6,8 +6,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app  
-      - ./backend/model:/app/model  
+      - ./backend:/app
+      - ./backend/app/model:/app/model
     environment:
       - PYTHONPATH=/app
       - UVICORN_RELOAD=true 
