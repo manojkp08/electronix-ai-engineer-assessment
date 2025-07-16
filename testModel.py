@@ -3,6 +3,7 @@ import torch
 
 # model_path = "./backend/app/local-twitter-sentiment-model"
 # model_path = "./backend/app/model"
+model_path = "cardiffnlp/twitter-roberta-base-sentiment-latest"
 
 # Load tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained(model_path)

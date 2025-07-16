@@ -261,8 +261,10 @@ def main():
             total_loss += loss.item()
 
             loss.backward()
+            # Gradient clipping
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
-            scheduler.step()  
+            scheduler.step()
             optimizer.zero_grad()
 
         avg_train_loss = total_loss / len(train_dataloader)

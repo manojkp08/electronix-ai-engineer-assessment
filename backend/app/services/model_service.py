@@ -52,35 +52,73 @@ class SentimentModel:
         return 'pt' if framework not in ['pt', 'tf'] else framework
 
     def load_model(self):
-
         try:
+            # First, try to load the local fine-tuned model
+            if self.local_model_path and os.path.exists(self.local_model_path):
+                logger.info(f'🔍 Attempting to load fine-tuned model from local path: {self.local_model_path}')
+                try:
+                    model_name = self.local_model_path
+                    self.is_finetuned = True
+                    
+                    # Load tokenizer and model from local path
+                    self.tokenizer = AutoTokenizer.from_pretrained(str(model_name))
+                    
+                    kwargs = {}
+                    if self.quantize:
+                        if self.framework == "pt":
+                            kwargs["load_in_8bit"] = True
+                        else:
+                            logger.warning("Quantization not fully supported for TensorFlow")
+                    
+                    self.model = AutoModelForSequenceClassification.from_pretrained(
+                        model_name,
+                        from_tf=self.framework == "tf",
+                        **kwargs
+                    )
+                    
+                    logger.info("✅ Fine-tuned model loaded successfully from local path")
+                    
+                except Exception as local_error:
+                    logger.warning(f"❌ Failed to load local model: {str(local_error)}")
+                    logger.info("🔄 Falling back to Hugging Face Hub model...")
+                    raise local_error  # Re-raise to trigger fallback
             
-            # logger.info(f"🌐 Loading pre-trained model from Hugging Face Hub: {self.model_path}")
-            # model_name = self.model_path
-            # self.is_finetuned = False
-
-            logger.info(f'Loading the finetuned model from the local path: {self.local_model_path}')
-            model_name = self.local_model_path
-            self.is_finetuned = True
-
-
-            # Load tokenizer and model
-            self.tokenizer = AutoTokenizer.from_pretrained(str(model_name))
-
-            kwargs = {}
-            if self.quantize:
-                if self.framework == "pt":
-                    kwargs["load_in_8bit"] = True
-                else:
-                    logger.warning("Quantization not fully supported for TensorFlow")
+            else:
+                # No local model path or path doesn't exist
+                logger.info("ℹ️ No local model found, loading from Hugging Face Hub...")
+                raise FileNotFoundError("Local model not found")
             
-            self.model = AutoModelForSequenceClassification.from_pretrained(
-                model_name,
-                from_tf=self.framework == "tf",
-                **kwargs
-            )
+        except Exception as e:
+            # Fallback to Hugging Face Hub model
+            logger.info(f"🌐 Loading pre-trained model from Hugging Face Hub: {self.model_path}")
+            model_name = self.model_path
+            self.is_finetuned = False
+        
+            try:
+            # Load tokenizer and model from Hugging Face Hub
+                self.tokenizer = AutoTokenizer.from_pretrained(str(model_name))
             
-            # Create pipeline
+                kwargs = {}
+                if self.quantize:
+                    if self.framework == "pt":
+                        kwargs["load_in_8bit"] = True
+                    else:
+                        logger.warning("Quantization not fully supported for TensorFlow")
+            
+                self.model = AutoModelForSequenceClassification.from_pretrained(
+                    model_name,
+                    from_tf=self.framework == "tf",
+                    **kwargs
+                )
+            
+                logger.info("✅ Pre-trained model loaded successfully from Hugging Face Hub")
+            
+            except Exception as hub_error:
+                logger.error(f"❌ Failed to load model from Hugging Face Hub: {str(hub_error)}")
+                raise hub_error
+    
+    # Create pipeline (common for both local and hub models)
+        try:
             self.pipeline = pipeline(
                 "text-classification",
                 model=self.model,
@@ -88,14 +126,14 @@ class SentimentModel:
                 framework=self._clean_framework(self.framework),
                 device="cpu"
             )
-
+            
             logger.info(f"Using framework: {self._clean_framework(self.framework)}")
             logger.info(f"Model type: {'Fine-tuned' if self.is_finetuned else 'Pre-trained'}")
-            logger.info("Model loaded successfully")
-            
-        except Exception as e:
-            logger.error(f"Error loading model: {str(e)}")
-            raise
+            logger.info("🎉 Model pipeline created successfully")
+        
+        except Exception as pipeline_error:
+            logger.error(f"❌ Error creating pipeline: {str(pipeline_error)}")
+            raise pipeline_error
 
 
     async def predict(self, text: str) -> Dict[str, str]:

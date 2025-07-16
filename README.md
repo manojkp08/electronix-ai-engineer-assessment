@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # sentiment-analysis-electronix-assessment
 =======
 # Sentiment Analysis System
@@ -26,7 +25,7 @@ An end-to-end microservice for binary sentiment analysis with a React frontend, 
 
 ### Backend API
 
-- GraphQL endpoint: `POST /graphql`
+- GraphQL endpoint: `localhost:8000/graphql`
 - REST endpoint: `POST /predict`
 - Health check: `GET /health`
 
@@ -36,4 +35,3 @@ To fine-tune the model:
 
 ```bash
 python scripts/finetune.py --data example_data.jsonl --epochs 3 --lr 3e-5
->>>>>>> 9f03b06 (initial commit)
