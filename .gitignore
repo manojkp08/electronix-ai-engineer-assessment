@@ -2,3 +2,6 @@
 frontend/node_modules/
 backend/app/model/*
 backend/app/local-twitter-sentiment-model/*
+temp_auto_push.bat
+temp_interactive_push.bat
+branch_structure.json
